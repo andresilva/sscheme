@@ -45,7 +45,7 @@ object SchemeParser extends SchemeTokenParsers {
       }
   }
 
-  def string = stringLiteral ^^ { SString(_) }
+  def string = stringLiteral ^^ { s => SString(s.replaceAll("\"", "")) }
 
   def number = digit.+ ^^ { c => Number(c.mkString.toInt) }
 

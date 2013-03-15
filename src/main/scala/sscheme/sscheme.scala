@@ -9,7 +9,7 @@ case class SList(val l: List[LispVal]) extends AnyVal with LispVal {
   override def toString = s"SList([${l.mkString(", ")}])"
 }
 case class DottedList(val l: List[LispVal], val d: LispVal) extends LispVal {
-  override def toString = s"DottedList([${l.mkString(", ")}])"
+  override def toString = s"DottedList([${l.mkString(", ")}], $d)"
 }
 case class Number(val n: Int) extends AnyVal with LispVal
 case class SString(val s: String) extends AnyVal with LispVal

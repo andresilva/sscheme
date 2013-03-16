@@ -26,7 +26,6 @@ case class Bool(val b: Boolean) extends AnyVal with LispVal {
 object SchemePrimitives {
   def unboxNum(v: LispVal): Int = v match {
     case Number(n) => n
-    case SList(List(n)) => unboxNum(n)
     case _ => 0
   }
 

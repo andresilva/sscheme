@@ -23,6 +23,38 @@ case class Bool(val b: Boolean) extends AnyVal with LispVal {
   override def toString = if (b) "#t" else "#f"
 }
 
+object SchemePrimitives {
+  def unboxNum(v: LispVal): Int = v match {
+    case Number(n) => n
+    case SList(List(n)) => unboxNum(n)
+    case _ => 0
+  }
+
+  def numBinOp(op: (Int, Int) => Int)(vs: List[LispVal]) =
+    Number(vs.map(unboxNum).reduceLeft(op))
+
+  val primitives: Map[String, List[LispVal] => LispVal] = Map(
+    "+" -> { numBinOp(_ + _) },
+    "-" -> { numBinOp(_ - _) },
+    "*" -> { numBinOp(_ * _) },
+    "/" -> { numBinOp(_ / _) },
+    "remainder" -> { numBinOp(_ % _) }
+  )
+
+  def apply(func: String, args: List[LispVal]): LispVal =
+    primitives.get(func).map(_(args)).getOrElse(Bool(false))
+}
+
+object SchemeInterpreter {
+  def apply(v: LispVal): LispVal = v match {
+    case s: SString => s
+    case n: Number => n
+    case b: Bool => b
+    case SList(List(Atom("quote"), v)) => v
+    case SList(Atom(func) :: args) => SchemePrimitives(func, args.map(apply))
+  }
+}
+
 trait SchemeTokenParsers extends JavaTokenParsers {
   def oneOf(chars: Char*)(kind: String): Parser[Elem] = {
     val charsSet = chars.toSet
@@ -70,8 +102,8 @@ object SchemeParser extends SchemeTokenParsers {
 
   def expr: Parser[LispVal] = atom | string | number | quoted | lists
 
-  def apply(input: String): String = parseAll(expr, input) match {
-    case Success(result, _) => result.toString
+  def apply(input: String): LispVal = parseAll(expr, input) match {
+    case Success(result, _) => result
     case failure : NoSuccess => scala.sys.error(failure.msg)
   }
 }
@@ -79,5 +111,5 @@ object SchemeParser extends SchemeTokenParsers {
 object SScheme extends App {
   val input = args.lift(0).getOrElse("")
   println(s"Input: $input")
-  println(s"Result: ${SchemeParser(input)}")
+  println(s"Result: ${SchemeInterpreter(SchemeParser(input))}")
 }

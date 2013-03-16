@@ -32,12 +32,49 @@ object SchemePrimitives {
   def numBinOp(op: (Int, Int) => Int)(vs: List[LispVal]) =
     Number(vs.map(unboxNum).reduceLeft(op))
 
+  def unaryOp(op: LispVal => LispVal)(vs: List[LispVal]) = vs match {
+    case List(v) => op(v)
+  }
+
+  object types {
+    def isSymbol(v: LispVal) = v match {
+      case _: Atom => Bool(true)
+      case _ => Bool(false)
+    }
+
+    def isNumber(v: LispVal) = v match {
+      case _: Number => Bool(true)
+      case _ => Bool(false)
+    }
+
+    def isString(v: LispVal) = v match {
+      case _: SString => Bool(true)
+      case _ => Bool(false)
+    }
+
+    def isBool(v: LispVal) = v match {
+      case _: Bool => Bool(true)
+      case _ => Bool(false)
+    }
+
+    def isList(v: LispVal) = v match {
+      case _: SList => Bool(true)
+      case _: DottedList => Bool(true)
+      case _ => Bool(false)
+    }
+  }
+
   val primitives: Map[String, List[LispVal] => LispVal] = Map(
     "+" -> { numBinOp(_ + _) },
     "-" -> { numBinOp(_ - _) },
     "*" -> { numBinOp(_ * _) },
     "/" -> { numBinOp(_ / _) },
-    "remainder" -> { numBinOp(_ % _) }
+    "remainder" -> { numBinOp(_ % _) },
+    "symbol?" -> { unaryOp(types.isSymbol) },
+    "string?" -> { unaryOp(types.isString) },
+    "number?" -> { unaryOp(types.isNumber) },
+    "bool?" -> { unaryOp(types.isBool) },
+    "list?" -> { unaryOp(types.isList) }
   )
 
   def apply(func: String, args: List[LispVal]): LispVal =

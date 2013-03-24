@@ -29,6 +29,27 @@ object SchemePrimitives {
     case _ => 0
   }
 
+  def unboxStr(v: LispVal): String = v match {
+    case SString(s) => s
+    case Number(n) => n.toString
+    case Bool(b) => b.toString
+    case _ => ""
+  }
+
+  def unboxBool(v: LispVal): Boolean = v match {
+    case Bool(b) => b
+    case _ => false
+  }
+
+  def boolBinOp[T](unboxer: LispVal => T)(op: (T, T) => Boolean)(vs: List[LispVal]) = {
+    require(vs.length == 2)
+    Bool(op(unboxer(vs(0)), unboxer(vs(1))))
+  }
+
+  def numBoolBinOp = boolBinOp(unboxNum) _
+  def strBoolBinOp = boolBinOp(unboxStr) _
+  def boolBoolBinOp = boolBinOp(unboxBool) _
+
   def numBinOp(op: (Int, Int) => Int)(vs: List[LispVal]) =
     Number(vs.map(unboxNum).reduceLeft(op))
 
@@ -76,6 +97,20 @@ object SchemePrimitives {
     "bool?" -> { unaryOp(types.isBool) },
     "list?" -> { unaryOp(types.isList) }
   )
+    "list?" -> { unaryOp(types.isList) },
+    "=" -> { numBoolBinOp(_ == _) },
+    "<" -> { numBoolBinOp(_ < _) },
+    ">" -> { numBoolBinOp(_ > _) },
+    "/=" -> { numBoolBinOp(_ != _) },
+    ">=" -> { numBoolBinOp(_ >= _) },
+    "<=" -> { numBoolBinOp(_ <= _) },
+    "&&" -> { boolBoolBinOp(_ && _) },
+    "||" -> { boolBoolBinOp(_ || _) },
+    "string=?" -> { strBoolBinOp(_ == _) },
+    "string<?" -> { strBoolBinOp(_ < _) },
+    "string>?" -> { strBoolBinOp(_ > _) },
+    "string<=?" -> { strBoolBinOp(_ <= _) },
+    "string>=?" -> { strBoolBinOp(_ >= _) })
 
   def apply(func: String, args: List[LispVal]): LispVal =
     primitives.get(func).map(_(args)).getOrElse(Bool(false))
@@ -154,7 +189,7 @@ object SchemeRepl extends App {
         repl
       }
     } catch {
-      case _: Exception => println("you broke the interpreter.")
+      case _: Exception => println("you broke the interpreter."); repl
     }
   }
 

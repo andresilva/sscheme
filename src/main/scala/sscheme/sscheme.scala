@@ -144,6 +144,25 @@ object SchemeParser extends SchemeTokenParsers {
   }
 }
 
+object SchemeRepl extends App {
+  def repl {
+    try {
+      val input = readPrompt
+      if (input != "quit") {
+        val result = SchemeInterpreter(SchemeParser(input))
+        println("res: " + result.toString)
+        repl
+      }
+    } catch {
+      case _: Exception => println("you broke the interpreter.")
+    }
+  }
+
+  def readPrompt: String = { print("sscheme> "); readLine }
+
+  repl
+}
+
 object SScheme extends App {
   val input = args.lift(0).getOrElse("")
   println(s"Input: $input")

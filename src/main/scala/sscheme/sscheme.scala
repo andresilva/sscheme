@@ -95,8 +95,6 @@ object SchemePrimitives {
     "string?" -> { unaryOp(types.isString) },
     "number?" -> { unaryOp(types.isNumber) },
     "bool?" -> { unaryOp(types.isBool) },
-    "list?" -> { unaryOp(types.isList) }
-  )
     "list?" -> { unaryOp(types.isList) },
     "=" -> { numBoolBinOp(_ == _) },
     "<" -> { numBoolBinOp(_ < _) },

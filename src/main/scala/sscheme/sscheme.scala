@@ -85,6 +85,41 @@ object SchemePrimitives {
     }
   }
 
+  object lists {
+    def car(vs: List[LispVal]): LispVal = vs match {
+      case List(SList(x :: xs)) => x
+      case List(DottedList(x :: xs, _)) => x
+      case List(x) => throw new RuntimeException("type mistmatch 'pair'")
+      case _ => throw new RuntimeException("bad arg number. 1 required")
+    }
+
+    def cdr(vs: List[LispVal]): LispVal = vs match {
+      case List(SList(x :: xs)) => SList(xs)
+      case List(DottedList(Seq(_), x)) => x
+      case List(DottedList(_ :: xs, x)) => DottedList(xs, x)
+      case List(x) => throw new RuntimeException("type mistmatch 'pair'")
+      case _ => throw new RuntimeException("bad arg number. 1 required")
+    }
+
+    def cons(vs: List[LispVal]): LispVal = vs match {
+      case List(x, SList(Nil)) => SList(List(x))
+      case List(x, SList(xs)) => SList(x :: xs)
+      case List(x, DottedList(xs, xlast)) => DottedList(x :: xs, xlast)
+      case List(x1, x2) => DottedList(List(x1), x2)
+      case _ => throw new RuntimeException("bad arg number. 2 required")
+    }
+
+    def eqv(vs: List[LispVal]): LispVal = vs match {
+      case List(Bool(arg1), Bool(arg2)) => Bool(arg1 == arg2)
+      case List(Number(arg1), Number(arg2)) => Bool(arg1 == arg2)
+      case List(SString(arg1), SString(arg2)) => Bool(arg1 == arg2)
+      case List(Atom(arg1), Atom(arg2)) => Bool(arg1 == arg2)
+      case List(DottedList(xs1, x1), DottedList(xs2, x2)) => eqv(List(SList(xs1 ++ List(x1)), SList(xs2 ++ List(x2))))
+      case List(SList(arg1), SList(arg2)) => Bool(arg1.length == arg2.length && arg1.zip(arg2).forall(p => p._1 == p._2))
+      case _ => throw new RuntimeException("bad arg number. 2 required")
+    }
+  }
+
   val primitives: Map[String, List[LispVal] => LispVal] = Map(
     "+" -> { numBinOp(_ + _) },
     "-" -> { numBinOp(_ - _) },
@@ -108,7 +143,13 @@ object SchemePrimitives {
     "string<?" -> { strBoolBinOp(_ < _) },
     "string>?" -> { strBoolBinOp(_ > _) },
     "string<=?" -> { strBoolBinOp(_ <= _) },
-    "string>=?" -> { strBoolBinOp(_ >= _) })
+    "string>=?" -> { strBoolBinOp(_ >= _) },
+    "car" -> lists.car,
+    "cdr" -> lists.cdr,
+    "cons" -> lists.cons,
+    "eq?" -> lists.eqv,
+    "eqv?" -> lists.eqv
+  )
 
   def apply(func: String, args: List[LispVal]): LispVal =
     primitives.get(func).map(_(args)).getOrElse(Bool(false))

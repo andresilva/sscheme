@@ -11,3 +11,9 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.0.4")
+
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-unchecked",
+  "-feature",
+  "-language:postfixOps")
